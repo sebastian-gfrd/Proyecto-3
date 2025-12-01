@@ -17,6 +17,7 @@ public class Usuario {
     private Integer usuarioId; 
 
     private String nombre;
+    @Indexed(unique = true)
     private String correo;
     private String telefono;
     private String rol;

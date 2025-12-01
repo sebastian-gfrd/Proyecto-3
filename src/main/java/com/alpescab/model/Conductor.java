@@ -1,50 +1,62 @@
 package com.alpescab.model;
 
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.geo.GeoJsonPoint;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexed;
 import org.springframework.data.mongodb.core.index.GeoSpatialIndexType;
 import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.geo.Point;
 
+@Data 
+@NoArgsConstructor // Constructor vacío (Obligatorio para que MongoDB pueda instanciar la clase)
+@AllArgsConstructor // Constructor con todos los argumentos (Útil si usas el Builder o pruebas)
 @Document(collection = "Conductores")
 public class Conductor {
+    public enum EstadoConductor {
+    ACTIVO,
+    INACTIVO,
+    OCUPADO
+    }
 
     @Id
-    private String id; // Este mapea al "conductor_id": { bsonType: "ObjectId" }
+    private String id; // Mapea al _id de Mongo (ObjectId)
 
-    private Integer usuarioId; // Referencia al usuario (int según tu schema anterior)
+    private Integer usuarioId; // Referencia al Usuario
     private Integer ciudadId;
     
-    // Campo del patrón Extended Reference
+    // Patrón Extended Reference: Guardamos nombre para no hacer join cada vez
     private String nombreCompleto; 
 
     private String numeroLicencia;
     
-    private Double calificacionAvg;
+    // La calificacion se inicializa en 
+    private Double calificacionAvg = 0.0;
     
-    // Aqui se muestra el acumulado de viajes completados del conductor (RFC2)
-    private Integer totalViajes;
+    // Patron Computed  para el RFC2: Contador acumulativo de viajes completados
+    private Integer totalViajes = 0;
 
-    private String estado; // "activo", "inactivo", "ocupado"
+    private EstadoConductor estado = EstadoConductor.ACTIVO; // "activo", "inactivo", "ocupado"
 
-    // --- CONFIGURACIÓN GEOESPACIAL (RF6) ---
-    // Esto permite usar repositorio.findByUbicacionActualNear(...)
+    //  CONFIGURACIÓN GEOESPACIAL (RF6) 
+    // Índice geoespacial para búsquedas "Near"
     @GeoSpatialIndexed(type = GeoSpatialIndexType.GEO_2DSPHERE)
     private GeoJsonPoint ubicacionActual;
 
-    public Conductor() {}
-
-    public Conductor(Integer usuarioId, String nombreCompleto, Integer ciudadId, Double latitud, Double longitud) {
+    
+    
+    public Conductor(Integer usuarioId, String nombreCompleto, Integer ciudadId, String numeroLicencia, Double latitud, Double longitud) {
         this.usuarioId = usuarioId;
         this.nombreCompleto = nombreCompleto;
         this.ciudadId = ciudadId;
-        this.calificacionAvg = 5.0;
-        this.totalViajes = 0;
-        this.estado = "activo";
+        this.numeroLicencia = numeroLicencia;
         
-        // Inicializar ubicación (Longitud, Latitud)
+    
+        
+        // Aqui se crea el punto en formato GeoJason
         this.ubicacionActual = new GeoJsonPoint(longitud, latitud);
-    }}
+    }
+}
