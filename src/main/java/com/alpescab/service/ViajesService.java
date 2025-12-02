@@ -4,7 +4,7 @@ import com.alpescab.dto.SolicitudViajeDTO;
 import com.alpescab.model.Conductor;
 import com.alpescab.model.EstadoConductor;
 import com.alpescab.model.Viajes;
-import com.alpescab.repository.ConductorRepository;
+import com.alpescab.repository.ConductoresRepository;
 import com.alpescab.repository.ViajesRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,6 +14,9 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import org.springframework.data.geo.Distance;
+import org.springframework.data.geo.Point;
+
 import java.time.LocalDateTime;
 
 @Service
@@ -22,7 +25,7 @@ import java.time.LocalDateTime;
 public class ViajesService {
 
     private final ViajesRepository viajesRepository;
-    private final ConductorRepository conductorRepository;
+    private final ConductoresRepository conductoresRepository;
     private final ReactiveMongoTemplate mongoTemplate;
 
     // RF6: Solicitar un Servicio
@@ -31,7 +34,9 @@ public class ViajesService {
         log.info("Solicitando servicio para pasajero: {}", solicitud.getPasajeroId());
 
         // 1. Buscar conductor disponible en la ciudad
-        return conductorRepository.findByEstadoAndCiudadId("DISPONIBLE", solicitud.getCiudadId())
+        return conductoresRepository
+                .findByUbicacionActualNearAndEstado(new Point(solicitud.getLongitud(), solicitud.getLatitud()),
+                        new Distance(10), EstadoConductor.ACTIVO)
                 .next() // Tomar el primero disponible (simplificación de "cerca")
                 .switchIfEmpty(Mono.error(new RuntimeException("No hay conductores disponibles")))
                 .flatMap(conductor -> {
@@ -56,7 +61,7 @@ public class ViajesService {
 
                     conductor.setEstado(EstadoConductor.OCUPADO);
 
-                    return conductorRepository.save(conductor)
+                    return conductoresRepository.save(conductor)
                             .then(viajesRepository.save(nuevoViaje));
                 });
     }
@@ -73,10 +78,10 @@ public class ViajesService {
                     if (datosFinales.getTarifa() != null)
                         viaje.setTarifa(datosFinales.getTarifa());
 
-                    return conductorRepository.findById(viaje.getConductorId())
+                    return conductoresRepository.findById(viaje.getConductorId())
                             .flatMap(conductor -> {
                                 conductor.setEstado(EstadoConductor.ACTIVO);
-                                return conductorRepository.save(conductor);
+                                return conductoresRepository.save(conductor);
                             })
                             .then(viajesRepository.save(viaje));
                 });

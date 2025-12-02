@@ -13,19 +13,16 @@ import reactor.core.publisher.Mono;
 @Repository
 public interface ConductoresRepository extends ReactiveMongoRepository<Conductor, String> {
 
-    // RF6 Esta sentencia busca al condcutor  dado la distancia mas cercana, el punto y el estado activo del conductor
+    // RF6 Esta sentencia busca al condcutor dado la distancia mas cercana, el punto
+    // y el estado activo del conductor
     Flux<Conductor> findByUbicacionActualNearAndEstado(Point ubicacion, Distance distancia, EstadoConductor estado);
 
-
-    //RFC2
+    // RFC2
     // Busca los conductores ordenados por totalViajes descendente y limita a 20.
     // Esto evita tener que usar Aggregations complejos manuales.
     Flux<Conductor> findTop20ByOrderByTotalViajesDesc();
 
+    Mono<Conductor> findByUsuarioId(String usuarioId); // bucar el usuario por id
 
-    
-    
-    Mono<Conductor> findByUsuarioId(String usuarioId); // bucar el usuario por id 
-    
     Mono<Conductor> findByNumeroLicencia(String numeroLicencia); // Buscar por licencia
 }

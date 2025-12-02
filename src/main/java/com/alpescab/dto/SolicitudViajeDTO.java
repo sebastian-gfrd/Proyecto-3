@@ -10,4 +10,6 @@ public class SolicitudViajeDTO {
     private String destinoUbicacion;
     private String tipoServicio; // e.g., "STANDARD", "PREMIUM"
     private Double distanciaKm;
+    private Double latitud;
+    private Double longitud;
 }
