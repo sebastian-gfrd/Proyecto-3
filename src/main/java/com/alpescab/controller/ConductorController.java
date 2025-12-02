@@ -1,5 +1,6 @@
 package com.alpescab.controller;
 
+import com.alpescab.dto.RegistroConductorDTO;
 import com.alpescab.model.Conductor;
 import com.alpescab.service.ConductorService;
 import lombok.RequiredArgsConstructor;
@@ -19,7 +20,15 @@ public class ConductorController {
     // RF2
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<Conductor> registrarConductor(@RequestBody Conductor conductor) {
+    public Mono<Conductor> registrarConductor(@RequestBody RegistroConductorDTO dto) {
+        // Crear conductor usando el constructor que acepta coordenadas
+        Conductor conductor = new Conductor(
+                dto.getUsuarioId(),
+                dto.getNombreCompleto(),
+                dto.getCiudadId(),
+                dto.getNumeroLicencia(),
+                dto.getLatitud(),
+                dto.getLongitud());
 
         return service.save(conductor);
     }
@@ -27,7 +36,6 @@ public class ConductorController {
     // RFC2
     @GetMapping("/top-20")
     public Flux<Conductor> obtenerTop20Conductores() {
-
         return service.obtenerTop20();
     }
 

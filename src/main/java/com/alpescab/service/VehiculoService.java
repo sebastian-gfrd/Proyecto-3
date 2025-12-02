@@ -20,13 +20,8 @@ public class VehiculoService {
     }
 
     public Mono<Vehiculo> crearVehiculo(Vehiculo vehiculo) {
-        return repo.existsById(vehiculo.getId())
-                .flatMap(exists -> {
-                    if (exists) {
-                        return Mono.error(new IllegalArgumentException("El vehículo con este ID ya existe."));
-                    }
-                    return repo.save(vehiculo);
-                });
+        // MongoDB generará automáticamente el ID si es null
+        return repo.save(vehiculo);
     }
 
     public Mono<Vehiculo> obtenerVehiculoPorId(String id) {

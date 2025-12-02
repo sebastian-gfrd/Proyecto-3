@@ -26,7 +26,7 @@ public class UsuariosService {
                         return Mono.error(new IllegalArgumentException("El correo electrónico ya está registrado."));
                     }
                     // Asignar fecha de creación si es un usuario nuevo
-                    if (usuario.getUsuario_id() == null) {
+                    if (usuario.getUsuarioId() == null) {
                         usuario.setFecha_creado(new Date());
                     }
                     return repository.save(usuario);

@@ -21,7 +21,7 @@ public class Conductor {
     private String conductor_id; 
 
     
-    @Field("usuario_id")
+    @Field("usuarioId")
     private String usuarioId; 
 
     @Field("ciudad_id")

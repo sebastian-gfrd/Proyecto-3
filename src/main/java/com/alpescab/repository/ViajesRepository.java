@@ -35,4 +35,8 @@ public interface ViajesRepository extends ReactiveMongoRepository<Viajes, String
      * @return Flux de viajes con el estado especificado
      */
     Flux<Viajes> findByEstado(String estado);
+
+    // RFC3: Buscar viajes por ciudad y rango de fechas
+    Flux<Viajes> findByCiudadIdAndFechaInicioBetween(String ciudadId, java.time.LocalDateTime fechaInicio,
+            java.time.LocalDateTime fechaFin);
 }

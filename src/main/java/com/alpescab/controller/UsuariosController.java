@@ -41,7 +41,7 @@ public class UsuariosController {
     public Mono<ResponseEntity<Usuarios>> update(@PathVariable String id, @RequestBody Usuarios usuario) {
         return service.findById(id)
                 .flatMap(existingUser -> {
-                    usuario.setUsuario_id(id);
+                    usuario.setUsuarioId(id);
                     // Copiar otros campos que se pueden actualizar
                     existingUser.setNombre(usuario.getNombre());
                     existingUser.setTelefono(usuario.getTelefono());

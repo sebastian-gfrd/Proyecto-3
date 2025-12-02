@@ -121,4 +121,42 @@ public class ViajesService {
     public Flux<Viajes> obtenerViajesPorEstado(String estado) {
         return viajesRepository.findByEstado(estado);
     }
+
+    // RFC3: Estadísticas de uso de servicios por ciudad y rango de fechas
+    public Flux<com.alpescab.dto.EstadisticaServicioDTO> obtenerEstadisticasServicio(
+            String ciudadId,
+            LocalDateTime fechaInicio,
+            LocalDateTime fechaFin) {
+
+        log.info("Obteniendo estadísticas para ciudad: {}, desde: {} hasta: {}",
+                ciudadId, fechaInicio, fechaFin);
+
+        // Primero obtenemos el total de servicios para calcular porcentajes
+        return viajesRepository.findByCiudadIdAndFechaInicioBetween(ciudadId, fechaInicio, fechaFin)
+                .collectList()
+                .flatMapMany(viajes -> {
+                    long totalServicios = viajes.size();
+
+                    if (totalServicios == 0) {
+                        return Flux.empty();
+                    }
+
+                    // Agrupar por tipo de servicio y contar
+                    java.util.Map<String, Long> serviciosPorTipo = viajes.stream()
+                            .collect(java.util.stream.Collectors.groupingBy(
+                                    Viajes::getTipoServicio,
+                                    java.util.stream.Collectors.counting()));
+
+                    // Convertir a DTOs con porcentajes y ordenar por cantidad descendente
+                    return Flux.fromIterable(serviciosPorTipo.entrySet())
+                            .map(entry -> {
+                                String tipoServicio = entry.getKey();
+                                Long cantidad = entry.getValue();
+                                Double porcentaje = (cantidad * 100.0) / totalServicios;
+                                return new com.alpescab.dto.EstadisticaServicioDTO(
+                                        tipoServicio, cantidad, porcentaje);
+                            })
+                            .sort((a, b) -> Long.compare(b.getCantidadServicios(), a.getCantidadServicios()));
+                });
+    }
 }

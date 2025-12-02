@@ -23,7 +23,7 @@ import java.util.List;
 public class Usuarios {
 
     @Id
-    private String usuario_id;
+    private String usuarioId;
 
     private String nombre;
 

@@ -24,7 +24,8 @@ public class VehiculoController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public Mono<ResponseEntity<Vehiculo>> crearVehiculo(@RequestBody Vehiculo vehiculo, UriComponentsBuilder uriBuilder) {
+    public Mono<ResponseEntity<Vehiculo>> crearVehiculo(@RequestBody Vehiculo vehiculo,
+            UriComponentsBuilder uriBuilder) {
         return service.crearVehiculo(vehiculo)
                 .map(creado -> {
                     URI location = uriBuilder.path("/{id}")
@@ -47,7 +48,8 @@ public class VehiculoController {
     }
 
     @PutMapping("/{id}")
-    public Mono<ResponseEntity<Vehiculo>> actualizarVehiculo(@PathVariable String id, @RequestBody Vehiculo vehiculoDetalles) {
+    public Mono<ResponseEntity<Vehiculo>> actualizarVehiculo(@PathVariable String id,
+            @RequestBody Vehiculo vehiculoDetalles) {
         return service.actualizarVehiculo(id, vehiculoDetalles)
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
@@ -63,5 +65,23 @@ public class VehiculoController {
     @GetMapping("/conductor/{conductorId}")
     public Flux<Vehiculo> obtenerVehiculosPorConductor(@PathVariable String conductorId) {
         return service.obtenerVehiculosPorConductor(conductorId);
+    }
+
+    // RF4: Registrar disponibilidad
+    @PostMapping("/{vehiculoId}/disponibilidad")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Mono<Vehiculo> registrarDisponibilidad(
+            @PathVariable String vehiculoId,
+            @RequestBody com.alpescab.model.Disponibilidad disponibilidad) {
+        return service.registrarDisponibilidad(vehiculoId, disponibilidad);
+    }
+
+    // RF5: Modificar disponibilidad
+    @PutMapping("/{vehiculoId}/disponibilidad/{index}")
+    public Mono<Vehiculo> modificarDisponibilidad(
+            @PathVariable String vehiculoId,
+            @PathVariable int index,
+            @RequestBody com.alpescab.model.Disponibilidad disponibilidad) {
+        return service.modificarDisponibilidad(vehiculoId, index, disponibilidad);
     }
 }

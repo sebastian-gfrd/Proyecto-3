@@ -26,9 +26,9 @@ public class ConductorService {
     // RF2 registrar un conductor verificando que primero exista un usuario
     public Mono<Conductor> save(Conductor conductor) {
 
-        return usuariosRepository.findById(String.valueOf(conductor.getUsuarioId())) // verifica que el usuario al que
-                                                                                     // se asociará el conductor debe
-                                                                                     // existir
+        return usuariosRepository.findById(conductor.getUsuarioId()) // verifica que el usuario al que
+                                                                     // se asociará el conductor debe
+                                                                     // existir
 
                 // Si el usuario no existe, se detiene el proceso con un error
                 .switchIfEmpty(Mono.error(

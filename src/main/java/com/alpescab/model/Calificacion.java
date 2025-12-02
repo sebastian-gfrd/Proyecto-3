@@ -20,7 +20,7 @@ public class Calificacion {
     @Field("calificacion_id")
     private String calificacionId;
 
-    @Field("usuario_id")
+    @Field("usuarioId")
     private String usuarioId;
 
     @Field("conductor_id")
