@@ -23,31 +23,30 @@ public class ConductorService {
         this.usuariosRepository = usuariosRepository;
     }
 
-    // RF2 registrar un conductor verificando que primero exista un usuario 
+    // RF2 registrar un conductor verificando que primero exista un usuario
     public Mono<Conductor> save(Conductor conductor) {
 
-       
-        return usuariosRepository.findById(String.valueOf(conductor.getUsuarioId())) //  verifica que  el usuario al que se asociará el conductor debe existir
+        return usuariosRepository.findById(String.valueOf(conductor.getUsuarioId())) // verifica que el usuario al que
+                                                                                     // se asociará el conductor debe
+                                                                                     // existir
 
                 // Si el usuario no existe, se detiene el proceso con un error
                 .switchIfEmpty(Mono.error(
                         new IllegalArgumentException("No se puede crear el conductor, el usuario con ID "
-                                + conductor.getUsuarioId() + " no existe.")
-                ))
+                                + conductor.getUsuarioId() + " no existe.")))
 
-                // En caso que el usuario sea valido  se continúa con la validación siguiente
+                // En caso que el usuario sea valido se continúa con la validación siguiente
                 .flatMap(usuarioEncontrado ->
 
-                        // Aqui se valida que no exista otro conductor con el  mismo id asociado o el mismo condcutor con otro id de usuario
-                        ConductoresRepository.findByUsuarioId(conductor.getUsuarioId())
-                                .flatMap(existente -> Mono.error(
-                                        new IllegalArgumentException("Este usuario ya tiene un perfil de conductor.")
-                                ))
+                // Aqui se valida que no exista otro conductor con el mismo id asociado o el
+                // mismo condcutor con otro id de usuario
+                ConductoresRepository.findByUsuarioId(conductor.getUsuarioId())
+                        .flatMap(existente -> Mono.error(
+                                new IllegalArgumentException("Este usuario ya tiene un perfil de conductor.")))
 
-                                // Si no existe un registro previo, se permite continuar con el registro
-                                .switchIfEmpty(Mono.just(conductor))
-                                .cast(Conductor.class)
-                )
+                        // Si no existe un registro previo, se permite continuar con el registro
+                        .switchIfEmpty(Mono.just(conductor))
+                        .cast(Conductor.class))
 
                 // Asigna los paramteros iniciales de cualquier conductor nuevo
                 .flatMap(conductorValidado -> {
@@ -64,7 +63,7 @@ public class ConductorService {
         return ConductoresRepository.findTop20ByOrderByTotalViajesDesc();
     }
 
-    //RF6
+    // RF6
     public Flux<Conductor> encontrarCercanos(double latitud, double longitud, double radioKm) {
         Point origen = new Point(longitud, latitud);
         Distance distancia = new Distance(radioKm, Metrics.KILOMETERS);
