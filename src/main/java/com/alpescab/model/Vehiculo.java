@@ -37,4 +37,7 @@ public class Vehiculo {
 
     @Field("anio")
     private Integer anio;
+
+    @Field("disponibilidad")
+    private java.util.List<Disponibilidad> disponibilidad = new java.util.ArrayList<>();
 }
