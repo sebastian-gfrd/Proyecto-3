@@ -2,6 +2,7 @@ package com.alpescab.service;
 
 import com.alpescab.dto.SolicitudViajeDTO;
 import com.alpescab.model.Conductor;
+import com.alpescab.model.EstadoConductor;
 import com.alpescab.model.Viajes;
 import com.alpescab.repository.ConductorRepository;
 import com.alpescab.repository.ViajesRepository;
@@ -53,7 +54,7 @@ public class ViajesService {
                     nuevoViaje.setFechaInicio(LocalDateTime.now());
                     nuevoViaje.setEstado("ASIGNADO");
 
-                    conductor.setEstado("EN_VIAJE");
+                    conductor.setEstado(EstadoConductor.OCUPADO);
 
                     return conductorRepository.save(conductor)
                             .then(viajesRepository.save(nuevoViaje));
@@ -74,7 +75,7 @@ public class ViajesService {
 
                     return conductorRepository.findById(viaje.getConductorId())
                             .flatMap(conductor -> {
-                                conductor.setEstado("DISPONIBLE");
+                                conductor.setEstado(EstadoConductor.ACTIVO);
                                 return conductorRepository.save(conductor);
                             })
                             .then(viajesRepository.save(viaje));
