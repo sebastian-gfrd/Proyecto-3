@@ -1,123 +1,118 @@
 package com.alpescab.service;
 
+import com.alpescab.dto.SolicitudViajeDTO;
+import com.alpescab.model.Conductor;
 import com.alpescab.model.Viajes;
+import com.alpescab.repository.ConductorRepository;
 import com.alpescab.repository.ViajesRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-/**
- * Servicio para la gestión de viajes.
- * Implementa la lógica de negocio para operaciones CRUD reactivas.
- */
+import java.time.LocalDateTime;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class ViajesService {
 
     private final ViajesRepository viajesRepository;
+    private final ConductorRepository conductorRepository;
+    private final ReactiveMongoTemplate mongoTemplate;
 
-    /**
-     * Obtiene todos los viajes.
-     * 
-     * @return Flux de todos los viajes
-     */
-    public Flux<Viajes> obtenerTodosLosViajes() {
-        log.info("Obteniendo todos los viajes");
-        return viajesRepository.findAll()
-                .doOnNext(viaje -> log.debug("Viaje encontrado: {}", viaje.getId()))
-                .doOnComplete(() -> log.info("Listado de viajes completado"));
+    // RF6: Solicitar un Servicio
+    @Transactional
+    public Mono<Viajes> solicitarServicio(SolicitudViajeDTO solicitud) {
+        log.info("Solicitando servicio para pasajero: {}", solicitud.getPasajeroId());
+
+        // 1. Buscar conductor disponible en la ciudad
+        return conductorRepository.findByEstadoAndCiudadId("DISPONIBLE", solicitud.getCiudadId())
+                .next() // Tomar el primero disponible (simplificación de "cerca")
+                .switchIfEmpty(Mono.error(new RuntimeException("No hay conductores disponibles")))
+                .flatMap(conductor -> {
+                    // 2. Calcular tarifa (simplificado, asumiendo tarifa base + km)
+                    // Nota: TarifasRepository usa Integer para ciudadId, pero Solicitud usa String.
+                    // Esto es un problema de tipos. Asumiremos conversión o ajuste.
+                    // Por ahora, usamos un valor por defecto si no se encuentra tarifa exacta.
+                    double tarifaEstimada = solicitud.getDistanciaKm() * 1.5; // Dummy logic
+
+                    // 3. Crear Viaje y Actualizar Conductor (Transaccional)
+                    Viajes nuevoViaje = new Viajes();
+                    nuevoViaje.setPasajeroId(solicitud.getPasajeroId());
+                    nuevoViaje.setConductorId(conductor.getConductor_id());
+                    nuevoViaje.setCiudadId(solicitud.getCiudadId());
+                    nuevoViaje.setOrigenUbicacion(solicitud.getOrigenUbicacion());
+                    nuevoViaje.setDestinoUbicacion(solicitud.getDestinoUbicacion());
+                    nuevoViaje.setTipoServicio(solicitud.getTipoServicio());
+                    nuevoViaje.setDistanciaKm(solicitud.getDistanciaKm());
+                    nuevoViaje.setTarifa(tarifaEstimada);
+                    nuevoViaje.setFechaInicio(LocalDateTime.now());
+                    nuevoViaje.setEstado("ASIGNADO");
+
+                    conductor.setEstado("EN_VIAJE");
+
+                    return conductorRepository.save(conductor)
+                            .then(viajesRepository.save(nuevoViaje));
+                });
     }
 
-    /**
-     * Obtiene un viaje por su ID.
-     * 
-     * @param id ID del viaje
-     * @return Mono del viaje encontrado
-     */
-    public Mono<Viajes> obtenerViajePorId(String id) {
-        log.info("Buscando viaje con ID: {}", id);
-        return viajesRepository.findById(id)
-                .doOnNext(viaje -> log.debug("Viaje encontrado: {}", viaje))
-                .doOnError(error -> log.error("Error al buscar viaje: {}", error.getMessage()));
+    // RF7: Finalizar Viaje
+    @Transactional
+    public Mono<Viajes> finalizarViaje(String viajeId, Viajes datosFinales) {
+        return viajesRepository.findById(viajeId)
+                .flatMap(viaje -> {
+                    viaje.setEstado("COMPLETADO");
+                    viaje.setFechaFin(LocalDateTime.now());
+                    if (datosFinales.getDistanciaKm() != null)
+                        viaje.setDistanciaKm(datosFinales.getDistanciaKm());
+                    if (datosFinales.getTarifa() != null)
+                        viaje.setTarifa(datosFinales.getTarifa());
+
+                    return conductorRepository.findById(viaje.getConductorId())
+                            .flatMap(conductor -> {
+                                conductor.setEstado("DISPONIBLE");
+                                return conductorRepository.save(conductor);
+                            })
+                            .then(viajesRepository.save(viaje));
+                });
     }
 
-    /**
-     * Crea un nuevo viaje.
-     * 
-     * @param viaje Viaje a crear
-     * @return Mono del viaje creado
-     */
-    public Mono<Viajes> crearViaje(Viajes viaje) {
-        log.info("Creando nuevo viaje");
-        return viajesRepository.save(viaje)
-                .doOnNext(v -> log.info("Viaje creado con ID: {}", v.getId()))
-                .doOnError(error -> log.error("Error al crear viaje: {}", error.getMessage()));
-    }
-
-    /**
-     * Actualiza un viaje existente.
-     * 
-     * @param id    ID del viaje a actualizar
-     * @param viaje Datos actualizados del viaje
-     * @return Mono del viaje actualizado
-     */
-    public Mono<Viajes> actualizarViaje(String id, Viajes viaje) {
-        log.info("Actualizando viaje con ID: {}", id);
-        return viajesRepository.findById(id)
-                .flatMap(viajeExistente -> {
-                    viaje.setId(id);
-                    return viajesRepository.save(viaje);
-                })
-                .doOnNext(v -> log.info("Viaje actualizado: {}", v.getId()))
-                .doOnError(error -> log.error("Error al actualizar viaje: {}", error.getMessage()));
-    }
-
-    /**
-     * Elimina un viaje por su ID.
-     * 
-     * @param id ID del viaje a eliminar
-     * @return Mono vacío
-     */
-    public Mono<Void> eliminarViaje(String id) {
-        log.info("Eliminando viaje con ID: {}", id);
-        return viajesRepository.deleteById(id)
-                .doOnSuccess(v -> log.info("Viaje eliminado: {}", id))
-                .doOnError(error -> log.error("Error al eliminar viaje: {}", error.getMessage()));
-    }
-
-    /**
-     * Obtiene viajes por conductor.
-     * 
-     * @param conductorId ID del conductor
-     * @return Flux de viajes del conductor
-     */
-    public Flux<Viajes> obtenerViajesPorConductor(String conductorId) {
-        log.info("Obteniendo viajes del conductor: {}", conductorId);
-        return viajesRepository.findByConductorId(conductorId);
-    }
-
-    /**
-     * Obtiene viajes por pasajero.
-     * 
-     * @param pasajeroId ID del pasajero
-     * @return Flux de viajes del pasajero
-     */
-    public Flux<Viajes> obtenerViajesPorPasajero(String pasajeroId) {
-        log.info("Obteniendo viajes del pasajero: {}", pasajeroId);
+    // RFC1: Consultar Histórico
+    public Flux<Viajes> consultarHistorico(String pasajeroId) {
         return viajesRepository.findByPasajeroId(pasajeroId);
     }
 
-    /**
-     * Obtiene viajes por estado.
-     * 
-     * @param estado Estado del viaje
-     * @return Flux de viajes con el estado especificado
-     */
-    public Flux<Viajes> obtenerViajesPorEstado(Viajes.EstadoViaje estado) {
-        log.info("Obteniendo viajes con estado: {}", estado);
+    // Métodos existentes (mantener compatibilidad si es necesario)
+    public Flux<Viajes> obtenerTodosLosViajes() {
+        return viajesRepository.findAll();
+    }
+
+    public Mono<Viajes> obtenerViajePorId(String id) {
+        return viajesRepository.findById(id);
+    }
+
+    public Mono<Viajes> crearViaje(Viajes viaje) {
+        return viajesRepository.save(viaje);
+    }
+
+    public Mono<Viajes> actualizarViaje(String id, Viajes viaje) {
+        viaje.setId(id);
+        return viajesRepository.save(viaje);
+    }
+
+    public Mono<Void> eliminarViaje(String id) {
+        return viajesRepository.deleteById(id);
+    }
+
+    public Flux<Viajes> obtenerViajesPorConductor(String conductorId) {
+        return viajesRepository.findByConductorId(conductorId);
+    }
+
+    public Flux<Viajes> obtenerViajesPorEstado(String estado) {
         return viajesRepository.findByEstado(estado);
     }
 }

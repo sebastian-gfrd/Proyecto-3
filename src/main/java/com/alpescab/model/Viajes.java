@@ -33,6 +33,15 @@ public class Viajes {
     @Field("pasajero_id")
     private String pasajeroId;
 
+    @Field("vehiculo_id")
+    private String vehiculoId;
+
+    @Field("ciudad_id")
+    private String ciudadId;
+
+    @Field("tipo_servicio")
+    private String tipoServicio;
+
     @NotBlank(message = "La ubicación de origen es obligatoria")
     @Field("origen_ubicacion")
     private String origenUbicacion;
@@ -49,7 +58,7 @@ public class Viajes {
     private LocalDateTime fechaFin;
 
     @NotNull(message = "El estado del viaje es obligatorio")
-    private EstadoViaje estado;
+    private String estado;
 
     @Positive(message = "La tarifa debe ser un valor positivo")
     private Double tarifa;
@@ -63,11 +72,4 @@ public class Viajes {
     /**
      * Enum para representar los estados posibles de un viaje
      */
-    public enum EstadoViaje {
-        SOLICITADO,
-        ACEPTADO,
-        EN_CURSO,
-        COMPLETADO,
-        CANCELADO
-    }
 }

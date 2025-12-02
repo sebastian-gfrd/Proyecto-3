@@ -34,5 +34,5 @@ public interface ViajesRepository extends ReactiveMongoRepository<Viajes, String
      * @param estado Estado del viaje
      * @return Flux de viajes con el estado especificado
      */
-    Flux<Viajes> findByEstado(Viajes.EstadoViaje estado);
+    Flux<Viajes> findByEstado(String estado);
 }
