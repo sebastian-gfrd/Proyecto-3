@@ -75,4 +75,8 @@ public class ConductorService {
     public Mono<Conductor> findById(String id) {
         return ConductoresRepository.findById(id);
     }
+
+    public Flux<Conductor> findAll() {
+        return ConductoresRepository.findAll();
+    }
 }
