@@ -16,11 +16,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @AllArgsConstructor // Constructor con todos los argumentos (Útil si usas el Builder o pruebas)
 @Document(collection = "Conductores")
 public class Conductor {
-    public enum EstadoConductor {
-    ACTIVO,
-    INACTIVO,
-    OCUPADO
-    }
+    
 
     @Id
     private String id; // Mapea al _id de Mongo (ObjectId)
