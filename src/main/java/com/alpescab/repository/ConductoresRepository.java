@@ -25,7 +25,7 @@ public interface ConductoresRepository extends ReactiveMongoRepository<Conductor
 
     
     
-    Mono<Conductor> findByUsuarioId(Integer usuarioId); // bucar el usuario por id 
+    Mono<Conductor> findByUsuarioId(String usuarioId); // bucar el usuario por id 
     
     Mono<Conductor> findByNumeroLicencia(String numeroLicencia); // Buscar por licencia
 }
